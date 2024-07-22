@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "./App.css";
-const backendUrl = "http://localhost:3000";
+import DownloadInfo from "./components/DownloadInfo";
+import { backendUrl } from "./utils";
 function App() {
   const [url, setUrl] = useState("");
   const handleClick = async () => {
@@ -21,9 +21,9 @@ function App() {
     }
   };
   return (
-    <>
       <div>
-        <label htmlFor="video-url">Link</label>
+        <DownloadInfo/>
+        {/* <label htmlFor="video-url">Link</label>
         <input
           id="video-url"
           type="text"
@@ -34,9 +34,8 @@ function App() {
         <button onClick={handleClick}>download</button>
         <a href={`${backendUrl}/download?url=${url}`} download="video.mkv">
           Download Video
-        </a>
+        </a> */}
       </div>
-    </>
   );
 }
 
