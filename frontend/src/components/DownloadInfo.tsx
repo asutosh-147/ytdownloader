@@ -2,48 +2,54 @@ import axios from "axios";
 import { useState } from "react";
 import { backendUrl, VideoInfoType } from "../utils";
 import { videoFormat } from "ytdl-core";
+import Loader from "../ui/Loader";
 
 const DownloadInfo = () => {
   const [info, setInfo] = useState<null | VideoInfoType>(null);
   const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
   const [formatOption, setFormatOption] = useState<videoFormat | null>(null);
   const fetchInfo = async () => {
+    if(!url.length) return;
+    setLoading(true);
     const response = await axios.get(`${backendUrl}/info?url=${url}`);
     const videoData = response.data;
     setInfo(videoData);
     setFormatOption(videoData.videoFormats[0]!);
+    setLoading(false);
   };
   const handleDownload = async () =>{
     try {
+      setLoading(true);
       const response = await axios.post(`${backendUrl}/download`,{
         format:formatOption,
         url
       },{
-        responseType:'stream'
+        responseType:'blob'
       });
-      console.log(response.data);
-      // const blob = await response.blob();
-      // console.log(blob.size);
-      // const durl = URL.createObjectURL(blob);
-      // const a = document.createElement("a");
-      // a.href = durl;
-      // a.download = "video.mp4";
-      // document.body.appendChild(a);
-      // a.click();
-      // URL.revokeObjectURL(durl);
+      const link = URL.createObjectURL(new Blob([response.data]));
+      const a = document.createElement("a");
+      a.href = link;
+      a.download = `${info?.videoDetails.title}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(link);
+      document.body.removeChild(a);
     } catch (error: any) {
       console.log(error.message);
+    } finally{
+      setLoading(false);
     }
   }
   return (
-    <div className="flex justify-center mt-20">
-      {!info && (
-        <div className="space-x-4">
+    <div className="flex justify-center h-full items-center">
+      {!info && !loading && (
+        <div className="space-x-4 mt-16">
           <input
             type="text"
             onChange={(e) => setUrl(e.target.value)}
             value={url}
-            className="ring-2 ring-black p-2 focus:outline-none rounded-md"
+            className="ring-2 ring-black p-2 focus:outline-none rounded-md w-[600px]"
           />
           <button
             onClick={fetchInfo}
@@ -53,8 +59,11 @@ const DownloadInfo = () => {
           </button>
         </div>
       )}
-      {info && (
-        <div className="flex flex-col items-center gap-4">
+      {
+        loading && <Loader/>
+      }
+      {info && !loading && (
+        <div className="flex flex-col items-center gap-4 mt-16">
           <div className="flex justify-center gap-5 p-4 bg-gray-800 bg-opacity-50 rounded-lg">
             <img
               src={info.videoDetails.thumbnails[3].url}
