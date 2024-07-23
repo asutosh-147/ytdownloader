@@ -6,14 +6,23 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import fs from "fs";
 import HttpsProxyAgent from "https-proxy-agent";
-
+import dotenv from "dotenv";
+dotenv.config();
 // const proxy = "http://111.111.111.111:8080";
 // const agent = HttpsProxyAgent(proxy);
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
 const app = express();
-app.use(cors());
+const allowedHosts = process.env.HOSTS ? process.env.HOSTS.split(",") : [];
+console.log(allowedHosts);
+app.use(
+  cors({
+    origin: allowedHosts,
+    methods: "GET,PUT,POST,DELETE",
+    credentials: true,
+  })
+);
 app.use(express.json());
 async function download(res: Response, url: string, format: videoFormat) {
   const videoStream = ytdl(url, {
@@ -27,15 +36,23 @@ async function download(res: Response, url: string, format: videoFormat) {
   const ffmpegProcess = cp.spawn(
     ffmpegPath!,
     [
-      "-loglevel", "8",
+      "-loglevel",
+      "8",
       "-hide_banner",
-      "-i", "pipe:3",
-      "-i", "pipe:4",
-      "-map", "0:a", 
-      "-map", "1:v", 
-      "-c:v", "copy",
-      "-c:a", "aac",
-      "-f", "matroska",
+      "-i",
+      "pipe:3",
+      "-i",
+      "pipe:4",
+      "-map",
+      "0:a",
+      "-map",
+      "1:v",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      "-f",
+      "matroska",
       "pipe:1",
     ],
     {
@@ -84,10 +101,12 @@ app.get("/info", async (req: Request, res: Response) => {
     });
     const audioFormats = info.formats.filter((metaInfo) => {
       return (
-        metaInfo.hasAudio && !metaInfo.hasVideo && (metaInfo.audioBitrate === 160 || metaInfo.audioBitrate === 128)
+        metaInfo.hasAudio &&
+        !metaInfo.hasVideo &&
+        (metaInfo.audioBitrate === 160 || metaInfo.audioBitrate === 128)
       );
     });
-    res.json({ videoFormats, videoDetails: info.videoDetails,audioFormats});
+    res.json({ videoFormats, videoDetails: info.videoDetails, audioFormats });
   } catch (error: any) {
     return res.status(400).json({ msg: error.message });
   }
