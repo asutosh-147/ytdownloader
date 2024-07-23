@@ -3,4 +3,5 @@ import {MoreVideoDetails, videoFormat} from "ytdl-core"
 export type VideoInfoType = {
     videoFormats:videoFormat[],
     videoDetails:MoreVideoDetails,
+    audioFormats:videoFormat[],
 }

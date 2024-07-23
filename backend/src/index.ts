@@ -23,6 +23,7 @@ async function download(res: Response, url: string, format: videoFormat) {
     quality: "highestaudio",
     filter: "audioonly",
   });
+  // audioStream.pipe(fs.createWriteStream("audio.mp3"));
   const ffmpegProcess = cp.spawn(
     ffmpegPath!,
     [
@@ -81,8 +82,12 @@ app.get("/info", async (req: Request, res: Response) => {
         !metaInfo.hasAudio
       );
     });
-
-    res.json({ videoFormats, videoDetails: info.videoDetails });
+    const audioFormats = info.formats.filter((metaInfo) => {
+      return (
+        metaInfo.hasAudio && !metaInfo.hasVideo && (metaInfo.audioBitrate === 160 || metaInfo.audioBitrate === 128)
+      );
+    });
+    res.json({ videoFormats, videoDetails: info.videoDetails,audioFormats});
   } catch (error: any) {
     return res.status(400).json({ msg: error.message });
   }

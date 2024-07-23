@@ -102,13 +102,14 @@ const DownloadInfo = () => {
                   onChange={(e) => {
                     setFormatOption(JSON.parse(e.target.value));
                   }}
+                  value={JSON.stringify(formatOption)}
                 >
                   {info.videoFormats.map((format, index) => {
-                    const size = Number(format.contentLength) / 1024 / 1024;
-
+                    const maxAudioSize = info.audioFormats[0].contentLength;
+                    const size = (Number(format.contentLength) + Number(maxAudioSize)) / (1024 * 1024);
                     return (
                       <option key={index} value={JSON.stringify(format)}>
-                        {format.qualityLabel} ({size.toFixed(2)}MB){" "}
+                        {format.qualityLabel} (upto {size.toFixed(2)}MB){" "}
                         {format.container}
                       </option>
                     );
@@ -122,7 +123,7 @@ const DownloadInfo = () => {
                     setInfo(null);
                     setUrl("");
                   }}
-                  className="bg-red-500 p-2 px-3 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+                  className="bg-red-500 p-2 px-6 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
                 >
                   Next
                 </button>
