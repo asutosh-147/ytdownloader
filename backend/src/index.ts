@@ -5,11 +5,8 @@ import cp from "child_process";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import fs from "fs";
-import HttpsProxyAgent from "https-proxy-agent";
 import dotenv from "dotenv";
 dotenv.config();
-// const proxy = "http://111.111.111.111:8080";
-// const agent = HttpsProxyAgent(proxy);
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
@@ -32,7 +29,6 @@ async function download(res: Response, url: string, format: videoFormat) {
     quality: "highestaudio",
     filter: "audioonly",
   });
-  // audioStream.pipe(fs.createWriteStream("audio.mp3"));
   const ffmpegProcess = cp.spawn(
     ffmpegPath!,
     [

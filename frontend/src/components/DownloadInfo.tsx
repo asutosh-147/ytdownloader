@@ -10,23 +10,32 @@ const DownloadInfo = () => {
   const [loading, setLoading] = useState(false);
   const [formatOption, setFormatOption] = useState<videoFormat | null>(null);
   const fetchInfo = async () => {
-    if(!url.length) return;
-    setLoading(true);
-    const response = await axios.get(`${backendUrl}/info?url=${url}`);
-    const videoData = response.data;
-    setInfo(videoData);
-    setFormatOption(videoData.videoFormats[0]!);
-    setLoading(false);
-  };
-  const handleDownload = async () =>{
+    if (!url.length) return;
     try {
       setLoading(true);
-      const response = await axios.post(`${backendUrl}/download`,{
-        format:formatOption,
-        url
-      },{
-        responseType:'blob'
-      });
+      const response = await axios.get(`${backendUrl}/info?url=${url}`);
+      const videoData = response.data;
+      setInfo(videoData);
+      setFormatOption(videoData.videoFormats[0]!);
+    } catch (error: any) {
+      console.log(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDownload = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${backendUrl}/download`,
+        {
+          format: formatOption,
+          url,
+        },
+        {
+          responseType: "blob",
+        }
+      );
       const link = URL.createObjectURL(new Blob([response.data]));
       const a = document.createElement("a");
       a.href = link;
@@ -37,38 +46,36 @@ const DownloadInfo = () => {
       document.body.removeChild(a);
     } catch (error: any) {
       console.log(error.message);
-    } finally{
+    } finally {
       setLoading(false);
     }
-  }
+  };
   return (
     <div className="flex justify-center h-full items-center">
       {!info && !loading && (
-        <div className="space-x-4 mt-16">
+        <div className="flex items-center md:flex-row flex-col gap-4 mt-16 w-5/6">
           <input
             type="text"
             onChange={(e) => setUrl(e.target.value)}
             value={url}
-            className="ring-2 ring-black p-2 focus:outline-none rounded-md w-[600px]"
+            className="ring-4 ring-gray-500 p-2 focus:outline-none rounded-md w-full md:w-[500px]"
           />
           <button
             onClick={fetchInfo}
-            className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+            className="bg-gray-950 p-2 px-6 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
           >
-            get Info
+            Get Video
           </button>
         </div>
       )}
-      {
-        loading && <Loader/>
-      }
+      {loading && <Loader />}
       {info && !loading && (
         <div className="flex flex-col items-center gap-4 mt-16">
-          <div className="flex justify-center gap-5 p-4 bg-gray-800 bg-opacity-50 rounded-lg">
+          <div className="flex justify-center gap-5 p-4 m-2 bg-gray-800 bg-opacity-50 rounded-lg md:flex-row flex-col">
             <img
               src={info.videoDetails.thumbnails[3].url}
               alt="Thumbnail"
-              className="shadow-xl"
+              className="shadow-xl w-64 sm:w-full mx-auto"
             />
             <div className="flex flex-col text-white gap-2">
               <div className="text-lg font-semibold text-white text-wrap">
@@ -94,11 +101,11 @@ const DownloadInfo = () => {
                   </span>
                 </div>
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-4 md:flex-row flex-col">
                 <select
                   name="formatType"
                   id="formatType-id"
-                  className="text-gray-50 font-semibold rounded-md bg-gray-800 p-1"
+                  className="text-gray-50 font-semibold rounded-md bg-gray-800 p-1 overflow-y-scroll"
                   onChange={(e) => {
                     setFormatOption(JSON.parse(e.target.value));
                   }}
@@ -106,7 +113,9 @@ const DownloadInfo = () => {
                 >
                   {info.videoFormats.map((format, index) => {
                     const maxAudioSize = info.audioFormats[0].contentLength;
-                    const size = (Number(format.contentLength) + Number(maxAudioSize)) / (1024 * 1024);
+                    const size =
+                      (Number(format.contentLength) + Number(maxAudioSize)) /
+                      (1024 * 1024);
                     return (
                       <option key={index} value={JSON.stringify(format)}>
                         {format.qualityLabel} (upto {size.toFixed(2)}MB){" "}
@@ -115,7 +124,10 @@ const DownloadInfo = () => {
                     );
                   })}
                 </select>
-                <button onClick={handleDownload} className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300">
+                <button
+                  onClick={handleDownload}
+                  className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+                >
                   Download
                 </button>
                 <button
@@ -130,13 +142,13 @@ const DownloadInfo = () => {
               </div>
             </div>
           </div>
-          <div>
+          {/* <div className="invisible md:visible">
             <iframe
               src={info.videoDetails.embed.iframeUrl}
               width={854}
               height={480}
             ></iframe>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
