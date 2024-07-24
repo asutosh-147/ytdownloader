@@ -1,5 +1,5 @@
 import DownloadInfo from "./components/DownloadInfo";
-import LandingDetails from "./components/LandingDetails";
+// import LandingDetails from "./components/LandingDetails";
 function App() {
   return (
       <div>
