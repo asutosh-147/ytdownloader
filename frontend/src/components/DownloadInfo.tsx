@@ -53,7 +53,7 @@ const DownloadInfo = () => {
   return (
     <div className="flex justify-center h-full items-center">
       {!info && !loading && (
-        <div className="flex items-center md:flex-row flex-col gap-4 mt-16 w-5/6">
+        <div className="flex justify-center items-center md:flex-row flex-col gap-4 mt-16 w-5/6">
           <input
             type="text"
             onChange={(e) => setUrl(e.target.value)}
