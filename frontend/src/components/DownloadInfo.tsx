@@ -3,20 +3,28 @@ import { useState } from "react";
 import { backendUrl, VideoInfoType } from "../utils";
 import { videoFormat } from "ytdl-core";
 import Loader from "../ui/Loader";
-
+import Progress from "./Progress";
+import { useWindowWidth } from "@react-hook/window-size";
 const DownloadInfo = () => {
   const [info, setInfo] = useState<null | VideoInfoType>(null);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [formatOption, setFormatOption] = useState<videoFormat | null>(null);
+  const [size, setSize] = useState(0);
+  const [percentage, setPercentage] = useState<null | number>(null);
+  const vw = useWindowWidth();
   const fetchInfo = async () => {
     if (!url.length) return;
     try {
       setLoading(true);
       const response = await axios.get(`${backendUrl}/info?url=${url}`);
-      const videoData = response.data;
+      const videoData = response.data as VideoInfoType;
       setInfo(videoData);
-      setFormatOption(videoData.videoFormats[0]!);
+      setFormatOption(videoData.videoFormats[0]);
+      setSize(
+        Number(videoData.videoFormats[0].contentLength) +
+          Number(videoData.audioFormats[0].contentLength)
+      );
     } catch (error: any) {
       console.log(error.message);
     } finally {
@@ -34,20 +42,34 @@ const DownloadInfo = () => {
         },
         {
           responseType: "blob",
+          onDownloadProgress: (progressEvent) => {
+            const { loaded } = progressEvent;
+            // console.log(loaded, size);
+            const percentCompleted = Math.ceil((loaded * 100) / size);
+            if (percentCompleted > 90) {
+              setPercentage(null);
+            } else setPercentage(percentCompleted);
+          },
         }
       );
-      const link = URL.createObjectURL(new Blob([response.data]));
+      const link = URL.createObjectURL(
+        new Blob([response.data], { type: "video/x-matroska" })
+      );
       const a = document.createElement("a");
       a.href = link;
-      a.download = `${info?.videoDetails.title}.mp4`;
+      a.download = `${info?.videoDetails.title}.${formatOption?.container}`;
       document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(link);
-      document.body.removeChild(a);
+      a.onload = () => {
+        URL.revokeObjectURL(link);
+        document.body.removeChild(a);
+        setPercentage(100);
+      };
     } catch (error: any) {
       console.log(error.message);
     } finally {
       setLoading(false);
+      setPercentage(null);
     }
   };
   return (
@@ -68,7 +90,8 @@ const DownloadInfo = () => {
           </button>
         </div>
       )}
-      {loading && <Loader />}
+      {loading && !percentage && <Loader />}
+      {percentage && <Progress percentage={percentage ? percentage : 100} />}
       {info && !loading && (
         <div className="flex flex-col items-center gap-4 mt-16">
           <div className="flex justify-center gap-5 p-4 m-2 bg-gray-800 bg-opacity-50 rounded-lg md:flex-row flex-col">
@@ -96,8 +119,8 @@ const DownloadInfo = () => {
                   views:{" "}
                   <span className="font-semibold text-white">
                     {Number(info.videoDetails.viewCount) < 1e6
-                      ? String(Number(info.videoDetails.viewCount) / 1e3) + "K"
-                      : String(Number(info.videoDetails.viewCount) / 1e6) + "M"}
+                      ? String((Number(info.videoDetails.viewCount) / 1e3).toFixed(2)) + "K"
+                      : String((Number(info.videoDetails.viewCount) / 1e6).toFixed(2)) + "M"}
                   </span>
                 </div>
               </div>
@@ -107,7 +130,12 @@ const DownloadInfo = () => {
                   id="formatType-id"
                   className="text-gray-50 font-semibold rounded-md bg-gray-800 p-1 overflow-y-scroll"
                   onChange={(e) => {
-                    setFormatOption(JSON.parse(e.target.value));
+                    const value = JSON.parse(e.target.value) as videoFormat;
+                    setFormatOption(value);
+                    setSize(
+                      Number(value.contentLength) +
+                        Number(info.audioFormats[0].contentLength)
+                    );
                   }}
                   value={JSON.stringify(formatOption)}
                 >
@@ -118,8 +146,8 @@ const DownloadInfo = () => {
                       (1024 * 1024);
                     return (
                       <option key={index} value={JSON.stringify(format)}>
-                        {format.qualityLabel} (upto {size.toFixed(2)}MB){" "}
-                        {format.container}
+                        {format.qualityLabel} {format.fps}fps (upto{" "}
+                        {size.toFixed(2)}MB) {format.container}
                       </option>
                     );
                   })}
@@ -142,13 +170,15 @@ const DownloadInfo = () => {
               </div>
             </div>
           </div>
-          {/* <div className="invisible md:visible">
-            <iframe
-              src={info.videoDetails.embed.iframeUrl}
-              width={854}
-              height={480}
-            ></iframe>
-          </div> */}
+          {vw > 768 && (
+            <div className="invisible md:visible">
+              <iframe
+                src={info.videoDetails.embed.iframeUrl}
+                width={854}
+                height={480}
+              ></iframe>
+            </div>
+          )}
         </div>
       )}
     </div>

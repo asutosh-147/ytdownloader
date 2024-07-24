@@ -63,7 +63,7 @@ async function download(res: Response, url: string, format: videoFormat) {
   audioStream.pipe(ffmpegProcess.stdio[3] as NodeJS.WritableStream);
   videoStream.pipe(ffmpegProcess.stdio[4] as NodeJS.WritableStream);
   // ffmpegProcess.stdio[1]?.pipe(fs.createWriteStream('output.mp4'));
-  ffmpegProcess.stdio[1]?.pipe(res);
+  ffmpegProcess.stdio[1].pipe(res);
   ffmpegProcess.on("error", (err: any) => {
     res.status(400).send("Error in processing");
     console.log(err.message);
