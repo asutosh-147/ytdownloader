@@ -1,38 +1,44 @@
 import axios from "axios";
 import { useState } from "react";
-import { backendUrl, VideoInfoType } from "../utils";
-import { videoFormat } from "ytdl-core";
+import { backendUrl, PlaylistInfoType, VideoInfoType } from "../utils";
 import Loader from "../ui/Loader";
-import Progress from "./Progress";
 import DownloadOptions from "./DownloadOptions";
+import DownloadPlaylist from "./DownloadPlaylist";
 const DownloadInfo = () => {
   const [info, setInfo] = useState<null | VideoInfoType>(null);
+  const [playListInfo, setPlayListInfo] = useState<PlaylistInfoType | null>(null);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [formatOption, setFormatOption] = useState<videoFormat | null>(null);
-  const [size, setSize] = useState(0);
-  const [percentage, setPercentage] = useState<null | number>(null);
   const fetchInfo = async () => {
     if (!url.length) return;
-    try {
-      setLoading(true);
-      const response = await axios.get(`${backendUrl}/info?url=${url}`);
-      const videoData = response.data as VideoInfoType;
-      setInfo(videoData);
-      setFormatOption(videoData.videoFormats[0]);
-      setSize(
-        Number(videoData.videoFormats[0].contentLength) +
-          Number(videoData.audioFormats[0].contentLength)
-      );
-    } catch (error: any) {
-      console.log(error.message);
-    } finally {
-      setLoading(false);
+    if(url.includes("playlist")){
+      try {
+        setLoading(true);
+        const response = await axios.get(`${backendUrl}/playlistInfo?url=${encodeURIComponent(url)}`);
+        setPlayListInfo(response.data);
+      } catch (error:any) {
+        console.log(error.message);
+      } finally{
+        setLoading(false);
+      }
+    }else{
+      try {
+        setLoading(true);
+        const response = await axios.get(`${backendUrl}/info?url=${url}`);
+        const videoData = response.data as VideoInfoType;
+        setInfo(videoData);
+      } catch (error: any) {
+        console.log(error.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
+  if (loading) return <Loader />;
+
   return (
     <div className="flex justify-center h-full items-center">
-      {!info && !loading && (
+      {!info && !playListInfo && (
         <div className="flex justify-center items-center md:flex-row flex-col gap-4 mt-16 w-5/6">
           <input
             type="text"
@@ -48,22 +54,18 @@ const DownloadInfo = () => {
           </button>
         </div>
       )}
-      {loading && !percentage && <Loader />}
-      {percentage && <Progress percentage={percentage ? percentage : 100} />}
-      {info && !loading && (
+      {info && (
         <DownloadOptions
-          formatOption={formatOption}
           info={info}
-          setFormatOption={setFormatOption}
           setInfo={setInfo}
-          setLoading={setLoading}
-          setPercentage={setPercentage}
-          setSize={setSize}
-          setUrl={setUrl}
-          size={size}
           url={url}
+          setUrl={setUrl}
+          setLoading={setLoading}
         />
       )}
+      {
+        playListInfo && <DownloadPlaylist info={playListInfo} />
+      }
     </div>
   );
 };

@@ -1,24 +1,31 @@
 import { videoFormat } from "ytdl-core";
 import { backendUrl, VideoInfoType } from "../utils";
-import React from "react";
+import React, { useState } from "react";
 import { useWindowWidth } from "@react-hook/window-size";
 import axios from "axios";
+import Progress from "./Progress";
 
-type DownloadOptionProps ={
-    info:VideoInfoType;
-    setFormatOption:React.Dispatch<React.SetStateAction<videoFormat | null>>;
-    formatOption:videoFormat | null;
-    setSize:React.Dispatch<React.SetStateAction<number>>;
-    setLoading:React.Dispatch<React.SetStateAction<boolean>>;
-    url:string;
-    setPercentage:React.Dispatch<React.SetStateAction<number | null>>;
-    setInfo:React.Dispatch<React.SetStateAction<VideoInfoType | null>>;
-    setUrl:React.Dispatch<React.SetStateAction<string>>;
-    size:number;
-}
+type DownloadOptionProps = {
+  info: VideoInfoType;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  url: string;
+  setInfo: React.Dispatch<React.SetStateAction<VideoInfoType | null>>;
+  setUrl: React.Dispatch<React.SetStateAction<string>>;
+};
 
-const DownloadOptions = ({info,setFormatOption,formatOption,setSize,setLoading,url,setPercentage,setInfo,setUrl,size}:DownloadOptionProps) => {
+const DownloadOptions = ({
+  info,
+  setLoading,
+  url,
+  setInfo,
+  setUrl,
+}: DownloadOptionProps) => {
   const vw = useWindowWidth();
+  const [percentage, setPercentage] = useState<null | number>(null);
+  const [formatOption, setFormatOption] = useState<videoFormat | null>(info.videoFormats[0]);
+  const [size, setSize] = useState(Number(info.videoFormats[0].contentLength) +
+  Number(info.audioFormats[0].contentLength));
+
   const handleDownload = async () => {
     try {
       setLoading(true);
@@ -32,7 +39,7 @@ const DownloadOptions = ({info,setFormatOption,formatOption,setSize,setLoading,u
           responseType: "blob",
           onDownloadProgress: (progressEvent) => {
             const { loaded } = progressEvent;
-            // console.log(loaded, size);
+            console.log(loaded);
             const percentCompleted = Math.ceil((loaded * 100) / size);
             if (percentCompleted > 90) {
               setPercentage(null);
@@ -61,94 +68,99 @@ const DownloadOptions = ({info,setFormatOption,formatOption,setSize,setLoading,u
     }
   };
   return (
-    <div className="flex flex-col items-center gap-4 mt-16">
-      <div className="flex justify-center gap-5 p-4 m-2 bg-gray-800 bg-opacity-50 rounded-lg md:flex-row flex-col">
-        <img
-          src={info.videoDetails.thumbnails[3].url}
-          alt="Thumbnail"
-          className="shadow-xl w-64 sm:w-full mx-auto"
-        />
-        <div className="flex flex-col text-white gap-2">
-          <div className="text-lg font-semibold text-white text-wrap">
-            {info.videoDetails.title}
-          </div>
-          <div className="font-semibold">
-            {info.videoDetails.author.user}
-          </div>
-          <div className="flex gap-2">
-            <div>
-              <span className="text-gray-200">duration: </span>{" "}
-              <span className="font-medium">
-                {Math.floor(Number(info.videoDetails.lengthSeconds) / 60)}:
-                {Number(info.videoDetails.lengthSeconds) % 60}{" "}
-              </span>
+    <>
+      {percentage && <Progress percentage={percentage ? percentage : 100} />}
+      <div className="flex flex-col items-center gap-4 mt-16">
+        <div className="flex justify-center gap-5 p-4 m-2 bg-gray-800 bg-opacity-50 rounded-lg md:flex-row flex-col">
+          <img
+            src={info.videoDetails.thumbnails[3].url}
+            alt="Thumbnail"
+            className="shadow-xl w-64 sm:w-full mx-auto"
+          />
+          <div className="flex flex-col text-white gap-2">
+            <div className="text-lg font-semibold text-white text-wrap">
+              {info.videoDetails.title}
             </div>
-            <div className="text-gray-200">
-              views:{" "}
-              <span className="font-semibold text-white">
-                {Number(info.videoDetails.viewCount) < 1e6
-                  ? String((Number(info.videoDetails.viewCount) / 1e3).toFixed(2)) + "K"
-                  : String((Number(info.videoDetails.viewCount) / 1e6).toFixed(2)) + "M"}
-              </span>
+            <div className="font-semibold">{info.videoDetails.author.user}</div>
+            <div className="flex gap-2">
+              <div>
+                <span className="text-gray-200">duration: </span>{" "}
+                <span className="font-medium">
+                  {Math.floor(Number(info.videoDetails.lengthSeconds) / 60)}:
+                  {Number(info.videoDetails.lengthSeconds) % 60}{" "}
+                </span>
+              </div>
+              <div className="text-gray-200">
+                views:{" "}
+                <span className="font-semibold text-white">
+                  {Number(info.videoDetails.viewCount) < 1e6
+                    ? String(
+                        (Number(info.videoDetails.viewCount) / 1e3).toFixed(2)
+                      ) + "K"
+                    : String(
+                        (Number(info.videoDetails.viewCount) / 1e6).toFixed(2)
+                      ) + "M"}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-4 md:flex-row flex-col">
-            <select
-              name="formatType"
-              id="formatType-id"
-              className="text-gray-50 font-semibold rounded-md bg-gray-800 p-1 overflow-y-scroll"
-              onChange={(e) => {
-                const value = JSON.parse(e.target.value) as videoFormat;
-                setFormatOption(value);
-                setSize(
-                  Number(value.contentLength) +
-                    Number(info.audioFormats[0].contentLength)
-                );
-              }}
-              value={JSON.stringify(formatOption)}
-            >
-              {info.videoFormats.map((format, index) => {
-                const maxAudioSize = info.audioFormats[0].contentLength;
-                const size =
-                  (Number(format.contentLength) + Number(maxAudioSize)) /
-                  (1024 * 1024);
-                return (
-                  <option key={index} value={JSON.stringify(format)}>
-                    {format.qualityLabel} {format.fps}fps (upto{" "}
-                    {size.toFixed(2)}MB) {format.container}
-                  </option>
-                );
-              })}
-            </select>
-            <button
-              onClick={handleDownload}
-              className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
-            >
-              Download
-            </button>
-            <button
-              onClick={() => {
-                setInfo(null);
-                setUrl("");
-              }}
-              className="bg-red-500 p-2 px-6 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
-            >
-              Next
-            </button>
+            <div className="flex gap-4 md:flex-row flex-col">
+              <select
+                name="formatType"
+                id="formatType-id"
+                className="text-gray-50 font-semibold rounded-md bg-gray-800 p-1 overflow-y-scroll"
+                onChange={(e) => {
+                  const value = JSON.parse(e.target.value) as videoFormat;
+                  setFormatOption(value);
+                  setSize(
+                    Number(value.contentLength) +
+                      Number(info.audioFormats[0].contentLength)
+                  );
+                }}
+                value={JSON.stringify(formatOption)}
+              >
+                {info.videoFormats.map((format, index) => {
+                  const maxAudioSize = info.audioFormats[0].contentLength;
+                  const size =
+                    (Number(format.contentLength) + Number(maxAudioSize)) /
+                    (1024 * 1024);
+                  return (
+                    <option key={index} value={JSON.stringify(format)}>
+                      {format.qualityLabel} {format.fps}fps (upto{" "}
+                      {size.toFixed(2)}MB) {format.container}
+                    </option>
+                  );
+                })}
+              </select>
+              <button
+                onClick={handleDownload}
+                className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+              >
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  setInfo(null);
+                  setUrl("");
+                }}
+                className="bg-red-500 p-2 px-6 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
+        {vw > 768 && (
+          <div className="invisible md:visible">
+            <iframe
+              src={info.videoDetails.embed.iframeUrl}
+              width={854}
+              height={480}
+            ></iframe>
+          </div>
+        )}
       </div>
-      {vw > 768 && (
-        <div className="invisible md:visible">
-          <iframe
-            src={info.videoDetails.embed.iframeUrl}
-            width={854}
-            height={480}
-          ></iframe>
-        </div>
-      )}
-    </div>
-  )
-}
+    </>
+  );
+};
 
-export default DownloadOptions
+export default DownloadOptions;
