@@ -3,9 +3,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { youtubeRouter } from "./routes";
-import ytdl from "@distube/ytdl-core";
-import fs from "fs";
-import readline from "readline";
 dotenv.config();
 
 const app = express();
