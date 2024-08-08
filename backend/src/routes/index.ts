@@ -40,9 +40,9 @@ youtubeRouter.get("/info", async (req: Request, res: Response) => {
         (metaInfo.audioBitrate === 160 || metaInfo.audioBitrate === 128)
       );
     });
-    console.log({
-      videoFormats,
-    });
+    // console.log({
+    //   videoFormats,
+    // });
     return res.json({
       videoFormats,
       videoDetails: info.videoDetails,
