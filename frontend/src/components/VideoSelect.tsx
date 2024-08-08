@@ -1,13 +1,12 @@
-import { useState } from "react";
-import { Item } from "ytpl";
+import ytpl, { Item } from "ytpl";
 import Checkbox from "../ui/Checkbox";
 type Props = {
   links: Item[];
+  setSelectedVideos:React.Dispatch<React.SetStateAction<ytpl.Item[]>>;
+  selectedVideos:ytpl.Item[];
 };
 
-const VideoSelect = ({ links }: Props) => {
-  const [selectedVideos, setSelectedVideos] = useState(links);
-  console.log(selectedVideos);
+const VideoSelect = ({ links,selectedVideos,setSelectedVideos }: Props) => {
   return (
     <div className="mt-4 bg-gray-700 rounded-lg">
       <div className="p-2">
@@ -18,7 +17,6 @@ const VideoSelect = ({ links }: Props) => {
             if (e.target.checked) setSelectedVideos(links);
             else setSelectedVideos([]);
           }}
-          defaultChecked
           checked={selectedVideos.length === links.length ? true : false}
         />
       </div>

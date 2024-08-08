@@ -3,6 +3,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { youtubeRouter } from "./routes";
+import ytdl from "@distube/ytdl-core";
+import fs from "fs";
+import readline from "readline";
 dotenv.config();
 
 const app = express();
@@ -17,7 +20,9 @@ app.use(
   })
 );
 app.use("/",youtubeRouter);
-
+app.get("/welcome",(req,res)=>{
+  res.send("Hello");
+})
 app.listen(3000, () => {
   console.log("listening port 3000");
 });

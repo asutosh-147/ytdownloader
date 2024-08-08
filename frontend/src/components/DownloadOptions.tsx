@@ -3,25 +3,24 @@ import { backendUrl, VideoInfoType } from "../utils";
 import React, { useState } from "react";
 import { useWindowWidth } from "@react-hook/window-size";
 import axios from "axios";
-import Progress from "./Progress";
+import { Button } from "./ui/button";
 
 type DownloadOptionProps = {
   info: VideoInfoType;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   url: string;
-  setInfo: React.Dispatch<React.SetStateAction<VideoInfoType | null>>;
-  setUrl: React.Dispatch<React.SetStateAction<string>>;
+  setPercentage:React.Dispatch<React.SetStateAction<number | null>>;
+  onClear:()=>void;
 };
 
 const DownloadOptions = ({
   info,
   setLoading,
   url,
-  setInfo,
-  setUrl,
+  setPercentage,
+  onClear
 }: DownloadOptionProps) => {
   const vw = useWindowWidth();
-  const [percentage, setPercentage] = useState<null | number>(null);
   const [formatOption, setFormatOption] = useState<videoFormat | null>(info.videoFormats[0]);
   const [size, setSize] = useState(Number(info.videoFormats[0].contentLength) +
   Number(info.audioFormats[0].contentLength));
@@ -39,7 +38,7 @@ const DownloadOptions = ({
           responseType: "blob",
           onDownloadProgress: (progressEvent) => {
             const { loaded } = progressEvent;
-            console.log(loaded);
+            // console.log(loaded);
             const percentCompleted = Math.ceil((loaded * 100) / size);
             if (percentCompleted > 90) {
               setPercentage(null);
@@ -69,7 +68,6 @@ const DownloadOptions = ({
   };
   return (
     <>
-      {percentage && <Progress percentage={percentage ? percentage : 100} />}
       <div className="flex flex-col items-center gap-4 mt-16">
         <div className="flex justify-center gap-5 p-4 m-2 bg-gray-800 bg-opacity-50 rounded-lg md:flex-row flex-col">
           <img
@@ -131,21 +129,18 @@ const DownloadOptions = ({
                   );
                 })}
               </select>
-              <button
+              <Button
                 onClick={handleDownload}
-                className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+                className="bg-gray-950 p-2 rounded-md font-semibold text-gray-200"
               >
                 Download
-              </button>
-              <button
-                onClick={() => {
-                  setInfo(null);
-                  setUrl("");
-                }}
-                className="bg-red-500 p-2 px-6 rounded-md font-semibold text-gray-200 active:scale-95 transition-transform duration-300"
+              </Button>
+              <Button
+                onClick={onClear}
+                className="bg-red-500 hover:bg-red-400 px-6 rounded-md font-semibold text-gray-200"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </div>
