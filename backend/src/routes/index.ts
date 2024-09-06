@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import ytdl, { videoFormat } from "@distube/ytdl-core";
 import { download } from "../utils/downlad";
 import ytpl from "ytpl";
+import { agent } from "../utils/ytdlAgent";
 
 export const youtubeRouter = Router();
 
@@ -21,7 +22,7 @@ youtubeRouter.post("/download", (req: Request, res: Response) => {
 youtubeRouter.get("/info", async (req: Request, res: Response) => {
   try {
     const url = req.query.url as string;
-    const info = await ytdl.getInfo(url);
+    const info = await ytdl.getInfo(url,{agent});
     const reducedFormats = info.formats
       .filter((metaInfo) => !metaInfo.hasAudio && metaInfo.contentLength && metaInfo.container==="mp4" && metaInfo.qualityLabel)
       .reduce((acc, metaInfo) => {
@@ -40,9 +41,6 @@ youtubeRouter.get("/info", async (req: Request, res: Response) => {
         (metaInfo.audioBitrate === 160 || metaInfo.audioBitrate === 128)
       );
     });
-    // console.log({
-    //   videoFormats,
-    // });
     return res.json({
       videoFormats,
       videoDetails: info.videoDetails,

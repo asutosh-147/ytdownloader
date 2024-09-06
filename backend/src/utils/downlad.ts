@@ -3,6 +3,7 @@ import cp from "child_process";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { Response } from "express";
+import { agent } from "./ytdlAgent";
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 export async function download(
@@ -24,11 +25,12 @@ export async function download(
     }
     // console.log(format);
     const videoStream = ytdl(url, {
-      format,
+      format, agent
     });
     const audioStream = ytdl(url, {
       quality: "highestaudio",
       filter: "audioonly",
+      agent
     });
     const ffmpegProcess = cp.spawn(
       ffmpegPath!,
